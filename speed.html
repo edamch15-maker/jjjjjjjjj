@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDAM Speed Race</title>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    overflow:hidden;
+    background:#111;
+    font-family:Arial,sans-serif;
+}
+
+#game{
+    width:100vw;
+    height:100vh;
+    position:relative;
+    overflow:hidden;
+    background:linear-gradient(#55bfff 0%,#bcecff 45%,#39a844 46%,#16852c 100%);
+}
+
+/* الطريق */
+
+.road{
+    position:absolute;
+    width:65vw;
+    height:150vh;
+    left:17.5vw;
+    top:-20vh;
+    background:#333;
+    transform:perspective(500px) rotateX(8deg);
+    border-left:12px solid #eee;
+    border-right:12px solid #eee;
+}
+
+.line{
+    position:absolute;
+    width:10px;
+    height:80px;
+    background:white;
+    left:50%;
+    transform:translateX(-50%);
+    opacity:.9;
+}
+
+.l1{top:0}
+.l2{top:160px}
+.l3{top:320px}
+.l4{top:480px}
+.l5{top:640px}
+.l6{top:800px}
+.l7{top:960px}
+.l8{top:1120px}
+
+/* HUD */
+
+#hud{
+    position:absolute;
+    top:15px;
+    left:15px;
+    z-index:20;
+    color:white;
+    background:rgba(0,0,0,.65);
+    padding:12px 18px;
+    border-radius:12px;
+    font-size:18px;
+}
+
+/* السيارات */
+
+.car{
+    position:absolute;
+    width:70px;
+    height:120px;
+    border-radius:15px 15px 8px 8px;
+    z-index:10;
+    box-shadow:0 5px 15px #000;
+}
+
+.player{
+    background:linear-gradient(90deg,#111,#e00000,#111);
+    bottom:45px;
+    left:calc(50% - 35px);
+}
+
+.player:before,
+.enemy:before{
+    content:"";
+    position:absolute;
+    width:48px;
+    height:38px;
+    left:11px;
+    top:15px;
+    background:#8bdcff;
+    border-radius:8px;
+}
+
+.player:after,
+.enemy:after{
+    content:"";
+    position:absolute;
+    width:50px;
+    height:35px;
+    left:10px;
+    bottom:12px;
+    background:#222;
+    border-radius:8px;
+}
+
+.enemy{
+    background:linear-gradient(90deg,#111,#1677ff,#111);
+}
+
+/* شاشة البداية */
+
+#start{
+    position:absolute;
+    inset:0;
+    z-index:50;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,.75);
+    color:white;
+    text-align:center;
+}
+
+#start h1{
+    font-size:48px;
+    margin:10px;
+    color:#00eaff;
+}
+
+#start p{
+    font-size:20px;
+}
+
+button{
+    border:0;
+    border-radius:12px;
+    padding:15px 35px;
+    font-size:20px;
+    font-weight:bold;
+    cursor:pointer;
+    background:#00eaff;
+    color:#111;
+}
+
+button:hover{
+    transform:scale(1.05);
+}
+
+/* أزرار التحكم */
+
+.controls{
+    position:absolute;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:30;
+    display:flex;
+    gap:25px;
+}
+
+.controls button{
+    width:80px;
+    height:65px;
+    padding:0;
+    font-size:30px;
+    background:rgba(0,0,0,.7);
+    color:white;
+}
+
+/* النهاية */
+
+#end{
+    position:absolute;
+    inset:0;
+    z-index:60;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    background:rgba(0,0,0,.8);
+    color:white;
+    text-align:center;
+}
+
+#end h1{
+    font-size:45px;
+    color:#00ff88;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+    <div id="start">
+        <h1>🏎️ EDAM SPEED RACE</h1>
+        <p>استعمل ⬅️ ➡️ لتجنب السيارات</p>
+        <button onclick="startGame()">ابدأ السباق</button>
+    </div>
+
+    <div id="hud">
+        🏎️ السرعة: <span id="speed">0</span> KM/H
+        <br>
+        🏆 النقاط: <span id="score">0</span>
+    </div>
+
+    <div class="road">
+
+        <div class="line l1"></div>
+        <div class="line l2"></div>
+        <div class="line l3"></div>
+        <div class="line l4"></div>
+        <div class="line l5"></div>
+        <div class="line l6"></div>
+        <div class="line l7"></div>
+        <div class="line l8"></div>
+
+    </div>
+
+    <div id="player" class="car player"></div>
+
+    <div id="enemy1" class="car enemy"></div>
+    <div id="enemy2" class="car enemy"></div>
+    <div id="enemy3" class="car enemy"></div>
+
+    <div class="controls">
+        <button onclick="moveLeft()">⬅️</button>
+        <button onclick="moveRight()">➡️</button>
+    </div>
+
+    <div id="end">
+        <h1>🏆 انتهى السباق!</h1>
+        <h2>النقاط: <span id="finalScore">0</span></h2>
+        <button onclick="location.reload()">إعادة اللعب</button>
+    </div>
+
+</div>
+
+<script>
+
+let player;
+let enemies = [];
+
+let playerX;
+let score = 0;
+let speed = 0;
+
+let gameRunning = false;
+
+let keys = {};
+
+document.addEventListener("keydown", function(e){
+
+    keys[e.key] = true;
+
+    if(e.key === "ArrowLeft"){
+        moveLeft();
+    }
+
+    if(e.key === "ArrowRight"){
+        moveRight();
+    }
+
+});
+
+document.addEventListener("keyup", function(e){
+    keys[e.key] = false;
+});
+
+
+function startGame(){
+
+    document.getElementById("start").style.display="none";
+
+    player = document.getElementById("player");
+
+    playerX = window.innerWidth / 2 - 35;
+
+    player.style.left = playerX + "px";
+
+    enemies = [
+        document.getElementById("enemy1"),
+        document.getElementById("enemy2"),
+        document.getElementById("enemy3")
+    ];
+
+    enemies.forEach((enemy,index)=>{
+
+        enemy.style.top = (-200 - index*350) + "px";
+
+        let lanes = [
+            window.innerWidth*0.25,
+            window.innerWidth*0.5,
+            window.innerWidth*0.7
+        ];
+
+        enemy.style.left = lanes[index%3] + "px";
+
+    });
+
+    speed = 80;
+
+    gameRunning = true;
+
+    gameLoop();
+}
+
+
+function moveLeft(){
+
+    if(!gameRunning) return;
+
+    playerX -= 70;
+
+    if(playerX < window.innerWidth*0.19){
+        playerX = window.innerWidth*0.19;
+    }
+
+    player.style.left = playerX + "px";
+}
+
+
+function moveRight(){
+
+    if(!gameRunning) return;
+
+    playerX += 70;
+
+    if(playerX > window.innerWidth*0.75){
+        playerX = window.innerWidth*0.75;
+    }
+
+    player.style.left = playerX + "px";
+}
+
+
+function gameLoop(){
+
+    if(!gameRunning) return;
+
+    score++;
+
+    document.getElementById("score").textContent =
+        Math.floor(score/10);
+
+    document.getElementById("speed").textContent =
+        speed + Math.floor(score/100);
+
+    enemies.forEach((enemy,index)=>{
+
+        let top = parseFloat(enemy.style.top);
+
+        top += 7 + speed/80;
+
+        if(top > window.innerHeight){
+
+            top = -250 - Math.random()*500;
+
+            let roadLeft = window.innerWidth*0.22;
+            let roadWidth = window.innerWidth*0.56;
+
+            enemy.style.left =
+                (roadLeft + Math.random()*roadWidth) + "px";
+        }
+
+        enemy.style.top = top + "px";
+
+        checkCollision(player,enemy);
+
+    });
+
+    requestAnimationFrame(gameLoop);
+}
+
+
+function checkCollision(a,b){
+
+    let r1 = a.getBoundingClientRect();
+    let r2 = b.getBoundingClientRect();
+
+    if(
+        r1.left < r2.right &&
+        r1.right > r2.left &&
+        r1.top < r2.bottom &&
+        r1.bottom > r2.top
+    ){
+
+        gameOver();
+    }
+}
+
+
+function gameOver(){
+
+    gameRunning = false;
+
+    document.getElementById("finalScore").textContent =
+        Math.floor(score/10);
+
+    document.getElementById("end").style.display="flex";
+}
+
+</script>
+
+</body>
+</html>
